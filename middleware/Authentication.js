@@ -3,8 +3,62 @@ const mongoose = require("mongoose");
 const Profile = require("../Database/modal/profile");
 const { statusCodes } = require("../response/httpStatusCode");
 const { messages } = require("../response/customMessages");
-const verifyToken = (role = ["user", "admin"]) =>
-  async function (req, res, next) {
+const verifyToken = async (req, res, next) => {
+  try {
+    const token =
+      req.headers["Authorization"] ||
+      req.headers["x-access-token"] ||
+      req.headers["authorization"];
+    
+    if (!token) {
+      return res.status(statusCodes.HTTP_UNAUTHORIZED).json({
+        status: statusCodes.HTTP_UNAUTHORIZED,
+        message: messages?.tokenEmpty,
+        data: [],
+      });
+    }
+
+    const decoded = jwt.verify(
+      token.replace("Bearer", ""),
+      process.env.secretKey
+    );
+
+    if (decoded.profileId) {
+      console.log("qwefq", decoded.profileId);
+      var userData = await Profile.findOne({
+        ProfileId: decoded.profileId,
+        isDeleted: false,
+      });
+    }
+    if (userData) {
+      if (!userData.isActive) {
+        return res.status(statusCodes.HTTP_UNAUTHORIZED).json({
+          status: statusCodes.HTTP_UNAUTHORIZED,
+          message: messages.userInactive,
+          data: [],
+        });
+      }
+      req.user = userData;
+      next();
+    } else {
+      return res.status(statusCodes.HTTP_UNAUTHORIZED).json({
+        status: statusCodes.HTTP_UNAUTHORIZED,
+        message: messages.tokenInvalid,
+        data: [],
+      });
+    }
+  } catch (error) {
+    console.error("Token verification error:", error);
+    return res.status(statusCodes.HTTP_UNAUTHORIZED).json({
+      status: statusCodes.HTTP_UNAUTHORIZED,
+      message: messages.tokenInvalid,
+      data: [],
+    });
+  }
+};
+const verifyRole =
+  (roles = []) =>
+  async (req, res, next) => {
     try {
       const token =
         req.headers["x-access-token"] ||
@@ -19,29 +73,10 @@ const verifyToken = (role = ["user", "admin"]) =>
         });
       }
 
-      const decoded = jwt.verify(
-        token.replace("Bearer", ""),
-        process.env.secretKey
-      );
+      const decodedToken = jwt.verify(token, process.env.secretKey);
 
-      if (decoded.profileId) {
-        console.log("qwefq", decoded.profileId);
-
-        var userData = await Profile.findOne({
-          ProfileId: decoded.profileId,
-          isDeleted: false,
-        });
-      }
-      if (userData) {
-        if (!userData.isActive) {
-          return res.status(statusCodes.HTTP_UNAUTHORIZED).json({
-            status: statusCodes.HTTP_UNAUTHORIZED,
-            message: messages.userInactive,
-            data: [],
-          });
-        }
-        req.user = userData;
-        next();
+      if (roles.includes(decodedToken.role)) {
+        return next();
       } else {
         return res.status(statusCodes.HTTP_UNAUTHORIZED).json({
           status: statusCodes.HTTP_UNAUTHORIZED,
@@ -58,34 +93,5 @@ const verifyToken = (role = ["user", "admin"]) =>
       });
     }
   };
-const verifyAdminRole = (roles, action) =>
-  async function (req, res, next) {
-  
-    let isPermissionDenied = true;
-    if (req.user && req.user.permissions) {
-      if (req.user.permissions[roles]) {
-        if (
-          req.user.permissions[roles].indexOf(action.toString()) ||
-          req.user.permissions[roles].indexOf("ALL")
-        ) {
-          isPermissionDenied = false;
-        }
-      }
-    }
-    if (req.user.userType == "AP") {
-      isPermissionDenied = false;
-    }
-    if (isPermissionDenied) {
-      return sendErrorResponse(
-        req,
-        res,
-        statusCodes.HTTP_UNAUTHORIZED,
-        message.tokenInvalid,
-        []
-      );
-    } else {
-      next();
-    }
-  };
 
-module.exports = { verifyAdminRole, verifyToken };
+module.exports = { verifyRole, verifyToken };

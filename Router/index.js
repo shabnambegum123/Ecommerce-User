@@ -1,25 +1,41 @@
-const router = require('express').Router()
-const { routes } = require("../route/endPoint");
+const router = require("express").Router();
+const { routes } = require("../routes/endPoint");
 
-const {verifyToken, verifyRole} = require("../middleware/Authentication")
+const { verifyToken, verifyRole } = require("../middleware/Authentication");
 
-const {CreateProfile,updateProfile,getProfileById,listProfile,deleteProfile,loginProfile} = require("../controller/controller")
+const {
+  CreateProfile,
+  updateProfile,
+  getProfileById,
+  listProfile,
+  deleteProfile,
+  forgetPassword,
+  loginProfile,
+  resetPassword,
+  changePassword,
+  loginMobileNumber
+} = require("../controller/profileController");
+const { errHandle } = require("../middleware/errorHandler");
 
-router.post(routes.v1.user.CreateProfile,CreateProfile) // dpne
-router.put(routes.v1.user.updateProfile,verifyToken(['user', 'admin']),updateProfile)
-router.post(routes.v1.user.loginProfile,loginProfile)  // done
-// router.get("/getById/profile",[verifyToken, verifyRole("User")],getProfileById)
-// router.get("/list/profile",[verifyToken, verifyRole("User")],listProfile)
-// router.delete("/delete/profile",[verifyToken, verifyRole("User")],deleteProfile)
+router.post(routes.v1.user.CreateProfile, CreateProfile); // done
+router.put(
+  routes.v1.user.updateProfile,
+  (verifyToken, verifyRole(["user", "admin"])),
+  updateProfile // done
+);
+router.post(routes.v1.user.loginProfile, loginProfile); // done
+router.post(routes.v1.user.forgetPassword, (verifyToken, verifyRole(["user", "admin"])), forgetPassword);// done
+router.put(routes.v1.user.changePassword, changePassword)// done
+router.put(
+  routes.v1.user.resetPassword,
+  [verifyToken, verifyRole(["user", "admin"])],
+  resetPassword
+);// done
+router.get(routes.v1.user.getById,[verifyToken, verifyRole(["user", "admin"])],getProfileById)// done
+router.get("/list/profile",[verifyToken, verifyRole(["user", "admin"])],listProfile)
+router.delete(routes.v1.user.deleteProfile,[verifyToken, verifyRole(["user", "admin"])],deleteProfile) // done
+router.post(routes.v1.user.loginMobileNumber, loginMobileNumber) // done
 
 
-
-
-
-
-
-
-
-
-
-module.exports = router
+router.use(errHandle)
+module.exports = router;

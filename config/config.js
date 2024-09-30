@@ -1,11 +1,23 @@
 module.exports = function (env) {
-    const DEV_CONSTANTS = {};
+    const DEV_CONSTANTS = {
+          database: "mongodb+srv://shabnambegum227:shabnam123@cluster0.vfakp.mongodb.net/Ecommerce",
+          PORT:5000
+    };
   
-    const LOCAL_CONSTANTS = {};
+    const LOCAL_CONSTANTS = {
+      database: "mongodb+srv://shabnambegum227:shabnam123@cluster0.vfakp.mongodb.net/Ecommerce",
+      PORT:5000
+    };
   
-    const STAGE_CONSTANTS = {};
+    const STAGE_CONSTANTS = {
+      database: "mongodb+srv://shabnambegum227:shabnam123@cluster0.vfakp.mongodb.net/Ecommerce",
+      PORT:5000
+    };
   
-    const PREPROD_CONSTANTS = {};
+    const PREPROD_CONSTANTS = {
+      database: "mongodb+srv://shabnambegum227:shabnam123@cluster0.vfakp.mongodb.net/Ecommerce",
+      PORT:5000
+    };
   
     let envType;
   
